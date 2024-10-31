@@ -12,6 +12,9 @@ transformers = "^4.46.1"
 huggingface = "^0.0.1"
 litserve = "^0.2.3"
 pydantic = "^2.9.2"
+litgpt = "^0.5.3"
+sentence-transformers = "^3.2.1"
+bitsandbytes = "^0.44.1"
 
 
 [build-system]
