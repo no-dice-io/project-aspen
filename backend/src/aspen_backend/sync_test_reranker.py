@@ -16,5 +16,5 @@ response = requests.post(
 
 results = response.json()
 print(results)
-for passage, score in zip(results["ranked_passages"], results["scores"]):
-    print(f"Score: {score:.4f} | Passage: {passage}")
+#for passage, score in zip(results["ranked_passages"], results["scores"]):
+#    print(f"Score: {score:.4f} | Passage: {passage}")

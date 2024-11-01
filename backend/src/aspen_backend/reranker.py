@@ -1,14 +1,16 @@
 import litserve as ls
 from sentence_transformers import CrossEncoder
 import numpy as np
+from typing import Optional
+import os
+
 
 class RerankingAPI(ls.LitAPI):
-    def setup(self, device: str = "cpu"):
-        self.model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+    def setup(self, device: Optional[str] = "cpu"):
+        self.model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
     
-    def decode_request(self, request) -> dict:
+    def decode_request(self, request: dict) -> list:
         # Handle both batched and unbatched requests
-        print(request)
         if isinstance(request, list):
             request = request[0]  # Take first item if batched
             
@@ -23,38 +25,54 @@ class RerankingAPI(ls.LitAPI):
 
         query = request.get("query")
         passages = request.get("passages")
-        pairs = [[query, passage] for passage in passages]
 
-        return {
-            "query": query,
-            "passages": passages,
-            "pairs": pairs
-        }
+        payload =  [
+            [query, passage] 
+            for passage in passages
+        ]
+
+        print("decoding: ", payload)
+
+        return payload
     
-    def predict(self, batch: dict):
-        # Handle both batched and unbatched inputs
-        print(batch)
-        if isinstance(batch, list):
-            batch = batch[0]
-            
-        pairs = batch.get("pairs")
-        passages = batch.get("passages")
+    def batch(self, inputs: list) -> list:
 
-        scores = self.model.predict(pairs)
-        print(pairs, scores)
-        ranked_indices = np.argsort(scores)[::-1]
-        ranked_scores = scores[ranked_indices]
-        ranked_passages = [passages[i] for i in ranked_indices]
+        print("batch: ", inputs)
+        return inputs
+    
+    def predict(self, batch: list) -> list:
+        # Handle both batched and unbatched inputs
+        print("prepredict ", batch)
+        batch = batch[0] if len(batch) == 1 else batch
         
-        return {
-            "ranked_passages": ranked_passages,
-            "scores": ranked_scores.tolist()
-        }
+        query = batch[0][0]
+        passages = [passage for _, passage in batch]
+
+        scores = self.model.predict(batch)
+        ranked_indices = np.argsort(scores)[::-1]
+        #ranked_scores = scores[ranked_indices]
+        ranked_passages = [(passages[i], scores[i]) for i in ranked_indices]
+
+
+        print("predict: ", ranked_passages)
+
+        return ranked_passages
+    
+    def unbatch(self, output: list) -> list:
+        
+        print("unbatch: ", output)  
+        return list(output)
     
     def encode_response(self, output):
+
         print(output)
-        return {"hi I'm carl": "hi I'm carl"}   
-    
+        payload = {
+            "ranked_passages": output[0]
+            , "ranked_scores": output[1]
+        }   
+        print(payload)
+
+        return payload
 
 if __name__ == "__main__":
     server = ls.LitServer(
