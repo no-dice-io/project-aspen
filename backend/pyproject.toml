@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Backend service for Project Aspen."
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+packages = [
+    { include = "aspen_backend", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
